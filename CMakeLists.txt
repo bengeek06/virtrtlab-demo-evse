@@ -38,7 +38,35 @@ target_link_libraries(evse PRIVATE evse_core)
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
-enable_testing()
-find_package(GTest REQUIRED)
+include(CTest)
 
-add_subdirectory(tests)
+if(BUILD_TESTING)
+    find_package(GTest QUIET CONFIG)
+
+    if(NOT GTest_FOUND)
+        find_package(GTest QUIET)
+    endif()
+
+    if(NOT GTest_FOUND)
+        include(FetchContent)
+
+        FetchContent_Declare(
+            googletest
+            URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(googletest)
+    endif()
+
+    if(TARGET GTest::gtest AND NOT TARGET GTest::GTest)
+        add_library(GTest::GTest INTERFACE IMPORTED)
+        target_link_libraries(GTest::GTest INTERFACE GTest::gtest)
+    endif()
+
+    if(TARGET GTest::gtest_main AND NOT TARGET GTest::Main)
+        add_library(GTest::Main INTERFACE IMPORTED)
+        target_link_libraries(GTest::Main INTERFACE GTest::gtest_main)
+    endif()
+
+    add_subdirectory(tests)
+endif()
